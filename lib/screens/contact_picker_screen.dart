@@ -15,6 +15,8 @@ class ContactPickerScreen extends StatefulWidget {
 
 class _ContactPickerScreenState extends State<ContactPickerScreen> {
   List<Contact>? _contacts;
+  List<Contact>? _filteredContacts;
+  String _searchQuery = '';
 
   @override
   void initState() {
@@ -25,8 +27,30 @@ class _ContactPickerScreenState extends State<ContactPickerScreen> {
   void _fetch() async {
     if (await FlutterContacts.requestPermission()) {
       final contacts = await FlutterContacts.getContacts(withProperties: true);
-      setState(() => _contacts = contacts);
+      setState(() {
+        _contacts = contacts;
+        _filteredContacts = contacts;
+      });
     }
+  }
+
+  String _getInitials(String name) {
+    final parts = name.trim().split(' ');
+    if (parts.length == 1) {
+      return parts[0].substring(0, 1).toUpperCase();
+    } else {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+  }
+
+  void _filterContacts(String query) {
+    final filtered = _contacts!
+        .where((c) => c.displayName.toLowerCase().contains(query.toLowerCase()))
+        .toList();
+    setState(() {
+      _searchQuery = query;
+      _filteredContacts = filtered;
+    });
   }
 
   void _addReminder(Contact contact) async {
@@ -40,9 +64,8 @@ class _ContactPickerScreenState extends State<ContactPickerScreen> {
       final reminder = ContactReminder(
         id: newId,
         displayName: contact.displayName,
-        phoneNumber: contact.phones.isNotEmpty
-            ? contact.phones.first.number
-            : '',
+        phoneNumber:
+        contact.phones.isNotEmpty ? contact.phones.first.number : '',
         lastTexted: DateTime.now(),
         intervalValue: result['value'],
         intervalUnit: result['unit'],
@@ -58,6 +81,7 @@ class _ContactPickerScreenState extends State<ContactPickerScreen> {
         reminder.intervalUnit,
         newId,
       );
+
       if (mounted) Navigator.pop(context);
     }
   }
@@ -65,16 +89,60 @@ class _ContactPickerScreenState extends State<ContactPickerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Choose Friend')),
-      body: _contacts == null
-          ? const Center(child: CircularProgressIndicator())
-          : ListView.builder(
-              itemCount: _contacts!.length,
-              itemBuilder: (context, i) => ListTile(
-                title: Text(_contacts![i].displayName),
-                onTap: () => _addReminder(_contacts![i]),
+      appBar: AppBar(
+        title: const Text('Choose Friend'),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(60),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: TextField(
+              onChanged: _filterContacts,
+              decoration: InputDecoration(
+                hintText: 'Search contacts...',
+                prefixIcon: const Icon(Icons.search),
+                filled: true,
+                fillColor: Colors.white.withOpacity(0.1),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
               ),
             ),
+          ),
+        ),
+      ),
+      body: _contacts == null
+          ? const Center(child: CircularProgressIndicator())
+          : _filteredContacts!.isEmpty
+          ? const Center(child: Text('No contacts found'))
+          : ListView.builder(
+        padding: const EdgeInsets.all(8),
+        itemCount: _filteredContacts!.length,
+        itemBuilder: (context, i) {
+          final contact = _filteredContacts![i];
+          return Card(
+            elevation: 2,
+            margin: const EdgeInsets.symmetric(vertical: 6),
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12)),
+            child: ListTile(
+              leading: (contact.photo != null && contact.photo!.isNotEmpty)
+                  ? CircleAvatar(
+                backgroundImage: MemoryImage(contact.photo!),
+              )
+                  : CircleAvatar(
+                child: Text(_getInitials(contact.displayName)),
+              ),
+              title: Text(contact.displayName),
+              subtitle: contact.phones.isNotEmpty
+                  ? Text(contact.phones.first.number)
+                  : null,
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => _addReminder(contact),
+            ),
+          );
+        },
+      ),
     );
   }
 }
