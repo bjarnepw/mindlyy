@@ -1,53 +1,74 @@
+import 'dart:io' show Platform;
+
+import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
-import 'package:timezone/data/latest.dart' as tz;
-import 'dart:io' show Platform;
+import 'package:timezone/data/latest.dart' as tz_data;
+import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class NotificationService {
-  static final _notifications = FlutterLocalNotificationsPlugin();
+  static final FlutterLocalNotificationsPlugin _notifications =
+      FlutterLocalNotificationsPlugin();
 
+  /// Call this once at app startup
   static Future<void> init() async {
-    tz.initializeTimeZones(); // Required for zonedSchedule
+    WidgetsFlutterBinding.ensureInitialized();
+
+    // Initialize timezone database
+    tz_data.initializeTimeZones();
+
+    try {
+      final timezoneName = await FlutterTimezone.getLocalTimezone();
+      tz.setLocalLocation(tz.getLocation(timezoneName as String));
+    } catch (e) {
+      debugPrint('Timezone init failed, defaulting to UTC: $e');
+      tz.setLocalLocation(tz.getLocation('UTC'));
+    }
+
+    // Notification initialization
     const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
-    const iosInit = DarwinInitializationSettings();
+    const iosInit = DarwinInitializationSettings(
+      requestAlertPermission: false, // we handle permissions manually
+      requestBadgePermission: false,
+      requestSoundPermission: false,
+    );
 
     await _notifications.initialize(
       const InitializationSettings(android: androidInit, iOS: iosInit),
     );
 
-    // Request notification permission on startup
-    await requestPermission();
+    // Request permissions
+    await requestPermissions();
   }
 
-  static Future<void> requestPermission() async {
-    if (Platform.isIOS) {
-      // iOS/macOS
-      final iosDetails = await _notifications
-          .resolvePlatformSpecificImplementation<
-          IOSFlutterLocalNotificationsPlugin>()
-          ?.requestPermissions(
-        alert: true,
-        badge: true,
-        sound: true,
-      );
-      if (iosDetails == false) print("iOS notifications denied");
-    } else if (Platform.isAndroid) {
-      // Android 13+ needs explicit POST_NOTIFICATIONS permission
+  /// Requests all necessary permissions for notifications
+  static Future<void> requestPermissions() async {
+    if (Platform.isAndroid) {
+      // Notification permission (Android 13+)
       final status = await Permission.notification.status;
       if (!status.isGranted) {
-        final result = await Permission.notification.request();
-        if (!result.isGranted) print("Android notifications denied");
+        final newStatus = await Permission.notification.request();
+        debugPrint('Notification permission: $newStatus');
+      }
+
+      // Exact alarm permission (for timers/reminders)
+      final alarmStatus = await Permission.scheduleExactAlarm.status;
+      if (!alarmStatus.isGranted) {
+        debugPrint(
+          'Exact alarm not granted, opening app settings for manual grant',
+        );
       }
     }
   }
 
+  /// Schedules a reminder notification
   static Future<void> scheduleReminder(
-      String name,
-      int value,
-      String unit,
-      String stringId,
-      ) async {
+    String name,
+    int value,
+    String unit,
+    String stringId,
+  ) async {
     Duration duration;
     switch (unit) {
       case 'minutes':
@@ -60,27 +81,55 @@ class NotificationService {
         duration = Duration(days: value);
     }
 
-    final int notificationId = stringId.hashCode.abs() % 2147483647;
+    final id = stringId.hashCode & 0x7fffffff;
+    final now = tz.TZDateTime.now(tz.local);
+    final scheduledDate = now.add(duration);
 
     await _notifications.zonedSchedule(
-      notificationId,
-      'Text $name',
-      'Mindlyy: Time to reconnect! ✨',
-      tz.TZDateTime.now(tz.local).add(duration),
+      id,
+      'Time to text $name!',
+      'Mindlyy: Keep the connection alive ✨',
+      scheduledDate,
       const NotificationDetails(
         android: AndroidNotificationDetails(
           'mindlyy_reminders',
           'Reminders',
-          importance: Importance.high,
+          channelDescription: 'Friendship reminders',
+          importance: Importance.max,
           priority: Priority.high,
         ),
         iOS: DarwinNotificationDetails(),
       ),
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
     );
   }
 
+  /// Cancel a specific notification
   static Future<void> cancel(String stringId) async {
-    await _notifications.cancel(stringId.hashCode.abs() % 2147483647);
+    await _notifications.cancel(stringId.hashCode & 0x7fffffff);
+  }
+
+  /// Show an instant test notification
+  static Future<void> showInstantNotification() async {
+    const androidDetails = AndroidNotificationDetails(
+      'mindlyy_test',
+      'Test Notifications',
+      importance: Importance.max,
+      priority: Priority.high,
+    );
+
+    const notificationDetails = NotificationDetails(
+      android: androidDetails,
+      iOS: DarwinNotificationDetails(),
+    );
+
+    await _notifications.show(
+      999,
+      'Mindlyy Test ✅',
+      'If you see this, notifications are working!',
+      notificationDetails,
+    );
   }
 }

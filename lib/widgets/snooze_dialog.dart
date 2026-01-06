@@ -9,7 +9,7 @@ class SnoozeDialog extends StatefulWidget {
 }
 
 class _SnoozeDialogState extends State<SnoozeDialog> {
-  int _selectedMinutes = 15;
+  int _minutes = 15;
 
   @override
   Widget build(BuildContext context) {
@@ -17,31 +17,29 @@ class _SnoozeDialogState extends State<SnoozeDialog> {
       title: Text('Snooze ${widget.name}'),
       content: Column(
         mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text('Remind me again in:'),
           const SizedBox(height: 16),
           DropdownButtonFormField<int>(
-            value: _selectedMinutes,
-            decoration: const InputDecoration(border: OutlineInputBorder()),
-            items: [5, 15, 30, 60].map((int value) {
-              return DropdownMenuItem<int>(
-                value: value,
-                child: Text('$value Minutes'),
-              );
-            }).toList(),
-            onChanged: (val) => setState(() => _selectedMinutes = val!),
+            initialValue: _minutes,
+            items: [5, 15, 30, 60]
+                .map(
+                  (v) => DropdownMenuItem(value: v, child: Text('$v Minutes')),
+                )
+                .toList(),
+            onChanged: (val) => setState(() => _minutes = val!),
           ),
         ],
       ),
       actions: [
         TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel')
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
         ),
         FilledButton(
-          onPressed: () => Navigator.pop(context, {'value': _selectedMinutes, 'unit': 'minutes'}),
-          child: const Text('Snooze'),
+          onPressed: () =>
+              Navigator.pop(context, {'value': _minutes, 'unit': 'minutes'}),
+          child: const Text('Confirm'),
         ),
       ],
     );

@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import '../models/reminder.dart';
 import '../services/storage_service.dart';
@@ -32,8 +31,6 @@ class _HomeScreenState extends State<HomeScreen> {
     _refreshTimer?.cancel();
     super.dispose();
   }
-
-
 
   void _load() async {
     final data = await StorageService.getReminders();
@@ -104,11 +101,19 @@ class _HomeScreenState extends State<HomeScreen> {
     if (result != null) {
       await NotificationService.cancel(r.id);
       await NotificationService.scheduleReminder(
-          r.displayName, result['value'], result['unit'], r.id);
+        r.displayName,
+        result['value'],
+        result['unit'],
+        r.id,
+      );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Snoozed ${r.displayName} for ${result['value']} mins')),
+          SnackBar(
+            content: Text(
+              'Snoozed ${r.displayName} for ${result['value']} mins',
+            ),
+          ),
         );
       }
     }
@@ -117,54 +122,83 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Mindlyy', style: TextStyle(fontWeight: FontWeight.bold))),
+      appBar: AppBar(
+        title: const Text(
+          'Mindlyy',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.notification_important_outlined),
+            tooltip: 'Test Notification',
+            onPressed: () async {
+              await NotificationService.showInstantNotification();
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Test notification sent! Check your tray.'),
+                  ),
+                );
+              }
+            },
+          ),
+        ],
+      ),
       body: _reminders.isEmpty
           ? const Center(child: Text('Add a friend to start!'))
           : ListView.builder(
-        itemCount: _reminders.length,
-        itemBuilder: (context, i) {
-          final r = _reminders[i];
-          return Dismissible(
-            key: Key(r.id),
-            // LEFT TO RIGHT -> DELETE (Red)
-            background: Container(
-              color: Colors.red,
-              alignment: Alignment.centerLeft,
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: const Icon(Icons.delete, color: Colors.white),
+              itemCount: _reminders.length,
+              itemBuilder: (context, i) {
+                final r = _reminders[i];
+                return Dismissible(
+                  key: Key(r.id),
+                  // LEFT TO RIGHT -> DELETE (Red)
+                  background: Container(
+                    color: Colors.red,
+                    alignment: Alignment.centerLeft,
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: const Icon(Icons.delete, color: Colors.white),
+                  ),
+                  // RIGHT TO LEFT -> CONTACTED (Green)
+                  secondaryBackground: Container(
+                    color: Colors.green,
+                    alignment: Alignment.centerRight,
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: const Icon(Icons.check, color: Colors.white),
+                  ),
+                  confirmDismiss: (direction) async {
+                    if (direction == DismissDirection.endToStart) {
+                      _logInteraction(r);
+                      return false; // Don't remove item from list
+                    } else {
+                      // Logic for Delete
+                      setState(() => _reminders.removeAt(i));
+                      StorageService.saveReminders(_reminders);
+                      NotificationService.cancel(r.id);
+                      return true;
+                    }
+                  },
+                  child: Card(
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    child: ListTile(
+                      title: Text(r.displayName),
+                      subtitle: Text(
+                        'Last: ${_getTimeAgo(r.lastTexted)} • Every ${r.intervalValue} ${r.intervalUnit}',
+                      ),
+                    ),
+                  ),
+                );
+              },
             ),
-            // RIGHT TO LEFT -> CONTACTED (Green)
-            secondaryBackground: Container(
-              color: Colors.green,
-              alignment: Alignment.centerRight,
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: const Icon(Icons.check, color: Colors.white),
-            ),
-            confirmDismiss: (direction) async {
-              if (direction == DismissDirection.endToStart) {
-                _logInteraction(r);
-                return false; // Don't remove item from list
-              } else {
-                // Logic for Delete
-                setState(() => _reminders.removeAt(i));
-                StorageService.saveReminders(_reminders);
-                NotificationService.cancel(r.id);
-                return true;
-              }
-            },
-            child: Card(
-              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: ListTile(
-                title: Text(r.displayName),
-                subtitle: Text('Last: ${_getTimeAgo(r.lastTexted)} • Every ${r.intervalValue} ${r.intervalUnit}'),
-              ),
-            ),
-          );
-        },
-      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
-          await Navigator.push(context, MaterialPageRoute(builder: (_) => const ContactPickerScreen()));
+          await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const ContactPickerScreen()),
+          );
           _load();
         },
         label: const Text('Add Friend'),
