@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mindlyy/screens/nav_page.dart';
 
 class ReminderDialog extends StatefulWidget {
   final String name;
@@ -43,8 +44,10 @@ class _ReminderDialogState extends State<ReminderDialog> {
           child: const Text('Cancel'),
         ),
         FilledButton(
-          onPressed: () =>
-              Navigator.pop(context, {'value': _val, 'unit': _unit}),
+          onPressed: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => NavPage()),
+          ),
           child: const Text('Set'),
         ),
       ],
