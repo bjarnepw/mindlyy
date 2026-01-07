@@ -1,7 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:mindlyy/custom/customAppBar.dart';
-import 'package:mindlyy/custom/customBottomNavBar.dart';
 import '../models/reminder.dart';
 import '../services/storage_service.dart';
 import '../services/notification_service.dart';
@@ -144,6 +142,17 @@ class _HomeScreenState extends State<HomeScreen> {
               }
             },
           ),
+          IconButton(
+            icon: Icon(Icons.person_add),
+            tooltip: 'Add person from contacts',
+            onPressed: () async {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ContactPickerScreen()),
+              );
+              _load();
+            },
+          ),
         ],
       ),
       body: _reminders.isEmpty
@@ -195,17 +204,13 @@ class _HomeScreenState extends State<HomeScreen> {
                 );
               },
             ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () async {
-          await Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const ContactPickerScreen()),
-          );
+      /*floatingActionButton: FloatingActionButton.extended(
+        onPressed: ()
           _load();
         },
         label: const Text('Add Friend'),
         icon: const Icon(Icons.person_add),
-      ),
+      ),*/
     );
   }
 }
