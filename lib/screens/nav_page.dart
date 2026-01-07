@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:mindlyy/screens/contact_picker_screen.dart';
 import 'package:mindlyy/screens/home_screen.dart';
+import 'package:mindlyy/screens/settings_screen.dart';
 
 import '../custom/customBottomNavBar.dart';
 
@@ -18,7 +19,11 @@ class NavPage extends StatefulWidget {
 class _NavPageState extends State<NavPage> {
   int index = 0;
 
-  List<Widget> _pagesList = [HomeScreen(), ContactPickerScreen()];
+  List<Widget> _pagesList = [
+    HomeScreen(),
+    ContactPickerScreen(),
+    SettingsPage(),
+  ];
 
   @override
   void initState() {}
