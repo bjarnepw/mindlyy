@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mindlyy/screens/nav_page.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'services/notification_service.dart';
 import 'screens/home_screen.dart';
@@ -36,7 +37,7 @@ class MindlyyApp extends StatelessWidget {
           theme: ThemeData(colorScheme: lightScheme, useMaterial3: true),
           darkTheme: ThemeData(colorScheme: darkScheme, useMaterial3: true),
           themeMode: ThemeMode.system, // follows Android system theme
-          home: const HomeScreen(),
+          home: const NavPage(),
         );
       },
     );

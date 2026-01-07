@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:mindlyy/custom/customAppBar.dart';
+import 'package:mindlyy/custom/customBottomNavBar.dart';
 import '../models/reminder.dart';
 import '../services/storage_service.dart';
 import '../services/notification_service.dart';
