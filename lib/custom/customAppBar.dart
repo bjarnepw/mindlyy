@@ -11,10 +11,7 @@ AppBar customAppbar(BuildContext context, String title) {
           padding: const EdgeInsets.all(0),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(0),
-            child: Image.network(
-              'https://aeg-nb.de/wp-content/uploads/2024/06/AEG_Logo_mobil.png',
-              height: 50,
-            ),
+            child: Image.network('', height: 50),
           ),
         ),
       ],
