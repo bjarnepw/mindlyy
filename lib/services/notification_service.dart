@@ -55,9 +55,7 @@ class NotificationService {
       // Exact alarm permission (for timers/reminders)
       final alarmStatus = await Permission.scheduleExactAlarm.status;
       if (!alarmStatus.isGranted) {
-        debugPrint(
-          'Exact alarm not granted, opening app settings for manual grant',
-        );
+        await Permission.scheduleExactAlarm.request();
       }
     }
   }
@@ -101,8 +99,8 @@ class NotificationService {
         iOS: DarwinNotificationDetails(),
       ),
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
+      //uiLocalNotificationDateInterpretation:
+      //DateInterpretation.absoluteTime,
     );
   }
 
