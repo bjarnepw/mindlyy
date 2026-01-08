@@ -64,8 +64,9 @@ class _ContactPickerScreenState extends State<ContactPickerScreen> {
       final reminder = ContactReminder(
         id: newId,
         displayName: contact.displayName,
-        phoneNumber:
-        contact.phones.isNotEmpty ? contact.phones.first.number : '',
+        phoneNumber: contact.phones.isNotEmpty
+            ? contact.phones.first.number
+            : '',
         lastTexted: DateTime.now(),
         intervalValue: result['value'],
         intervalUnit: result['unit'],
@@ -116,33 +117,35 @@ class _ContactPickerScreenState extends State<ContactPickerScreen> {
           : _filteredContacts!.isEmpty
           ? const Center(child: Text('No contacts found'))
           : ListView.builder(
-        padding: const EdgeInsets.all(8),
-        itemCount: _filteredContacts!.length,
-        itemBuilder: (context, i) {
-          final contact = _filteredContacts![i];
-          return Card(
-            elevation: 2,
-            margin: const EdgeInsets.symmetric(vertical: 6),
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12)),
-            child: ListTile(
-              leading: (contact.photo != null && contact.photo!.isNotEmpty)
-                  ? CircleAvatar(
-                backgroundImage: MemoryImage(contact.photo!),
-              )
-                  : CircleAvatar(
-                child: Text(_getInitials(contact.displayName)),
-              ),
-              title: Text(contact.displayName),
-              subtitle: contact.phones.isNotEmpty
-                  ? Text(contact.phones.first.number)
-                  : null,
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () => _addReminder(contact),
+              padding: const EdgeInsets.all(8),
+              itemCount: _filteredContacts!.length,
+              itemBuilder: (context, i) {
+                final contact = _filteredContacts![i];
+                return Card(
+                  elevation: 2,
+                  margin: const EdgeInsets.symmetric(vertical: 6),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: ListTile(
+                    leading:
+                        (contact.photo != null && contact.photo!.isNotEmpty)
+                        ? CircleAvatar(
+                            backgroundImage: MemoryImage(contact.photo!),
+                          )
+                        : CircleAvatar(
+                            child: Text(_getInitials(contact.displayName)),
+                          ),
+                    title: Text(contact.displayName),
+                    subtitle: contact.phones.isNotEmpty
+                        ? Text(contact.phones.first.number)
+                        : null,
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => _addReminder(contact),
+                  ),
+                );
+              },
             ),
-          );
-        },
-      ),
     );
   }
 }
